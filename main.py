@@ -8,6 +8,10 @@ def index():
     favorite_pizza = ["Pepperoni", "Cheese", "Mushorons", 41]
     return render_template("home.html", title="Home", favorite_pizza=favorite_pizza)
 
+@app.route('/user/<name>')
+def profile(name):
+    return render_template("profile.html", title="Profile", name=name)
+
 @app.errorhandler(404)
 def not_found(e):
     return render_template("404.html"), 404
