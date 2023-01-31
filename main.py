@@ -4,7 +4,7 @@ from wtforms import StringField, SubmitField
 from wtforms.validators import DataRequired
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
-
+# import pymysql
 from os import environ, path
 from dotenv import load_dotenv
 
@@ -14,7 +14,10 @@ load_dotenv(path.join(basedir, '.env'))
 
 app = Flask(__name__)
 
+
+
 # Add Database
+# DATABASE='mysql://user:password@localhost/db_name'
 app.config['SQLALCHEMY_DATABASE_URI'] = str(environ.get('DATABASE'))
 # Secret key
 app.config['SECRET_KEY'] = str(environ.get('SECRET_KEY'))
