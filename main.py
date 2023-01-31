@@ -11,6 +11,11 @@ from datetime import datetime
 from os import environ, path
 from dotenv import load_dotenv
 
+from werkzeug.security import generate_password_hash, check_password_hash
+
+
+
+
 # Set path to .env
 basedir = path.abspath(path.dirname(__file__))
 load_dotenv(path.join(basedir, '.env'))
@@ -35,6 +40,18 @@ class users(db.Model):
     email = db.Column(db.String(120), nullable=False, unique=True)
     favorite_color = db.Column(db.String(60))
     date_added = db.Column(db.DateTime, default=datetime.utcnow())
+    # passwrd
+    password_hash = db.Column(db.String(128))
+    @property
+    def password(self):
+        raise AttributeError('password is not a readable attribute')
+
+    @password.setter
+    def password(self, password):
+        self.password_hash = generate_password_hash(password)
+    
+    def verify_password(self, password):
+        return check_password_hash(self.password_hash, password)
 
     # Create a String
     def __repr__(self):
