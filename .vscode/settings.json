@@ -1,0 +1,14 @@
+{
+  "sqltools.connections": [
+    {
+      "mysqlOptions": {
+        "authProtocol": "default"
+      },
+      "previewLimit": 50,
+      "server": "localhost",
+      "driver": "MySQL",
+      "name": "UsersFlaskCodemy",
+      "connectString": "mysql://root:mypassword@localhost/users"
+    }
+  ]
+}

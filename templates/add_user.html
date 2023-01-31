@@ -32,7 +32,7 @@
   {% else %}
   <h1>User List:</h1>
   <br />
-  <form action="" method="POST">
+  <form action="/user/add" method="POST">
     {{ form.hidden_tag() }} {{ form.name.label(class="form-label") }} {{
     form.name(class="form-control") }}
     <br />
@@ -41,6 +41,12 @@
     <br />
     {{ form.favorite_color.label(class="form-label") }} {{
     form.favorite_color(class="form-control") }}
+    <br />
+    {{ form.password_hash.label(class="form-label") }} {{
+    form.password_hash(class="form-control") }}
+    <br />
+    {{ form.password_hash2.label(class="form-label") }} {{
+    form.password_hash2(class="form-control") }}
     <br />
     {{ form.submit(class="btn btn-secondary") }}
   </form>
