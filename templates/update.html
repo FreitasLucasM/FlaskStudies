@@ -40,6 +40,12 @@
     value=name_to_update.favorite_color) }}
     <br />
     {{ form.submit(class="btn btn-secondary") }}
+    <a
+      class="btn btn-danger"
+      type="button"
+      href="{{ url_for('delete', id=name_to_update.id) }}"
+      >Delete</a
+    >
   </form>
   <br /><br /><br />
 
