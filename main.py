@@ -42,6 +42,7 @@ class users(db.Model):
     date_added = db.Column(db.DateTime, default=datetime.utcnow())
     # passwrd
     password_hash = db.Column(db.String(128))
+    
     @property
     def password(self):
         raise AttributeError('password is not a readable attribute')
