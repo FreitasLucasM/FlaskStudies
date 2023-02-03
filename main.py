@@ -10,8 +10,11 @@ from datetime import datetime
 # import pymysql
 from os import environ, path
 from dotenv import load_dotenv
+from datetime import date
+import json
 
 from werkzeug.security import generate_password_hash, check_password_hash
+
 
 
 
@@ -78,6 +81,14 @@ class UserForm(FlaskForm):
     submit = SubmitField('Submit')
 
 # Json thing
+@app.route('/date')
+def get_current_date():
+    favorite_pizza = {
+        "John": "Pepperoni",
+        "Mary": "Cheese",
+        "Tim":"Mushroom"
+    }
+    return Response(json.dumps(favorite_pizza))
 
 
 
