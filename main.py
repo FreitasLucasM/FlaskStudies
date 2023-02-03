@@ -2,21 +2,18 @@ from flask import Flask, render_template, flash, request, Response
 from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField, PasswordField, BooleanField, ValidationError, EmailField
 from wtforms.validators import DataRequired, EqualTo, Length
+from wtforms.widgets import TextArea
 
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 
-from datetime import datetime
 # import pymysql
 from os import environ, path
 from dotenv import load_dotenv
-from datetime import date
+from datetime import date, datetime
 import json
 
 from werkzeug.security import generate_password_hash, check_password_hash
-
-
-
 
 
 # Set path to .env
@@ -24,7 +21,6 @@ basedir = path.abspath(path.dirname(__file__))
 load_dotenv(path.join(basedir, '.env'))
 
 app = Flask(__name__)
-
 
 
 # Add Database
@@ -37,6 +33,8 @@ db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 
 # Create Model
+
+
 class users(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(200), nullable=False)
@@ -45,7 +43,7 @@ class users(db.Model):
     date_added = db.Column(db.DateTime, default=datetime.utcnow())
     # passwrd
     password_hash = db.Column(db.String(128))
-    
+
     @property
     def password(self):
         raise AttributeError('password is not a readable attribute')
@@ -53,7 +51,7 @@ class users(db.Model):
     @password.setter
     def password(self, password):
         self.password_hash = generate_password_hash(password)
-    
+
     def verify_password(self, password):
         return check_password_hash(self.password_hash, password)
 
@@ -61,61 +59,103 @@ class users(db.Model):
     def __repr__(self):
         return '<Name %r>' % self.name
 
+# Blog model
+
+
+class Posts(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(255))
+    content = db.Column(db.Text)
+    author = db.Column(db.String(255))
+    date_posted = db.Column(db.DateTime, default=datetime.utcnow)
+    slug = db.Column(db.String(255))
+
 
 # Create a Form Class
 class NameForm(FlaskForm):
-    name =  StringField("What's Your Name", validators=[DataRequired()])
-    submit = SubmitField('Submit')
-    
-class PasswordForm(FlaskForm):
-    email =  EmailField("Email", validators=[DataRequired()])
-    password_hash = PasswordField("Password", validators=[DataRequired()])
-    submit = SubmitField('Submit')
-    
-class UserForm(FlaskForm):
-    name =  StringField("Name", validators=[DataRequired()])
-    email = StringField("Email", validators=[DataRequired()])
-    favorite_color = StringField("Favorite color")
-    password_hash = PasswordField("Password", validators=[DataRequired(), EqualTo('password_hash2', message='Passwords must match')])
-    password_hash2 = PasswordField("Confirm Password", validators=[DataRequired()])
+    name = StringField("What's Your Name", validators=[DataRequired()])
     submit = SubmitField('Submit')
 
+
+class PasswordForm(FlaskForm):
+    email = EmailField("Email", validators=[DataRequired()])
+    password_hash = PasswordField("Password", validators=[DataRequired()])
+    submit = SubmitField('Submit')
+
+
+class UserForm(FlaskForm):
+    name = StringField("Name", validators=[DataRequired()])
+    email = StringField("Email", validators=[DataRequired()])
+    favorite_color = StringField("Favorite color")
+    password_hash = PasswordField("Password", validators=[DataRequired(), EqualTo(
+        'password_hash2', message='Passwords must match')])
+    password_hash2 = PasswordField(
+        "Confirm Password", validators=[DataRequired()])
+    submit = SubmitField('Submit')
+
+
+class PostForm(FlaskForm):
+    title = StringField("Title", validators=[DataRequired()])
+    content = StringField("Content", validators=[
+                          DataRequired()], widget=TextArea())
+    author = StringField("Author", validators=[DataRequired()])
+    slug = StringField("Slug", validators=[DataRequired()])
+    submit = SubmitField("Submit")
+
 # Json thing
+
+
 @app.route('/date')
 def get_current_date():
     favorite_pizza = {
         "John": "Pepperoni",
         "Mary": "Cheese",
-        "Tim":"Mushroom"
+        "Tim": "Mushroom"
     }
     return Response(json.dumps(favorite_pizza))
 
 
+@app.route('/add-post', methods=['GET', 'POST'])
+def add_post():
+    form = PostForm()
+    if form.validate_on_submit():
+        post = Posts(title=form.title.data, content=form.content.data,
+                     author=form.author.data, slug=form.slug.data)
+        # Clear the form
+        form.title.data = ''
+        form.content.data = ''
+        form.author.data = ''
+        form.slug.data = ''
+        # Add to database
+        db.session.add(post)
+        db.session.commit()
+        # Flash message
+        flash("Blog Post Submitted Successfully!")
+    return render_template("add_post.html", form=form)
 
 
-@app.route('/test_pw', methods = ['GET', 'POST'])
+@app.route('/test_pw', methods=['GET', 'POST'])
 def test_pwd():
     email = None
     password = None
     passed = None
-    
+
     form = PasswordForm()
     # Validate form
     if form.validate_on_submit():
         email = form.email.data
         password = form.password_hash.data
-        
+
         # check user
-        user = users.query.filter_by(email = email).first()
+        user = users.query.filter_by(email=email).first()
         if user:
             passed = user.verify_password(password)
             print(passed)
-                
+
         # Clear form
         form.email.data = ''
         form.password_hash.data = ''
-    return render_template('test_pwd.html', email=email, password = password, form = form)
-        
+    return render_template('test_pwd.html', email=email, password=password, form=form)
 
 
 @app.route('/delete/<int:id>')
@@ -127,7 +167,7 @@ def delete(id):
         db.session.delete(user_to_delete)
         db.session.commit()
         flash("User Deleted Successfully!")
-        
+
         our_users = users.query.order_by(users.date_added)
         return render_template('add_user.html', form=form, name=name, our_users=our_users)
     except:
@@ -149,7 +189,7 @@ def update(id):
             db.session.commit()
             flash("User Updated Successfully")
             our_users = users.query.order_by(users.date_added)
-            return render_template('update.html', form=form, name_to_update=name_to_update,our_users=our_users)
+            return render_template('update.html', form=form, name_to_update=name_to_update, our_users=our_users)
         except:
             flash("Something goes wrong, Try Again")
             our_users = users.query.order_by(users.date_added)
@@ -158,7 +198,8 @@ def update(id):
         our_users = users.query.order_by(users.date_added)
         return render_template('update.html', form=form, name_to_update=name_to_update, our_users=our_users)
 
-@app.route('/user/add', methods = ['GET', 'POST'])
+
+@app.route('/user/add', methods=['GET', 'POST'])
 def add_user():
     name = None
     form = UserForm()
@@ -166,8 +207,10 @@ def add_user():
         user = users.query.filter_by(email=form.email.data).first()
         if user is None:
             # Password hash
-            hashed_password = generate_password_hash(form.password_hash.data, "sha256")
-            user = users(name=form.name.data, email=form.email.data, favorite_color=form.favorite_color.data, password_hash=hashed_password)
+            hashed_password = generate_password_hash(
+                form.password_hash.data, "sha256")
+            user = users(name=form.name.data, email=form.email.data,
+                         favorite_color=form.favorite_color.data, password_hash=hashed_password)
             db.session.add(user)
             db.session.commit()
         name = form.name.data
@@ -179,39 +222,42 @@ def add_user():
     our_users = users.query.order_by(users.date_added)
     return render_template('add_user.html', form=form, name=name, our_users=our_users)
 
+
 @app.route('/')
 def index():
     favorite_pizza = ["Pepperoni", "Cheese", "Mushorons", 41]
     return render_template("home.html", title="Home", favorite_pizza=favorite_pizza)
 
+
 @app.route('/user/<name>')
 def profile(name):
     return render_template("profile.html", title="Profile", name=name)
 
-@app.route('/name', methods = ['GET', 'POST'])
+
+@app.route('/name', methods=['GET', 'POST'])
 def name():
     name = None
     form = NameForm()
     # Validate Form
     if form.validate_on_submit():
-       name = form.name.data
-       form.name.data = '' 
-       flash("Form Submitted Sucessfully")
+        name = form.name.data
+        form.name.data = ''
+        flash("Form Submitted Sucessfully")
 
     return render_template('name.html',
-    title="Name",
-    name = name,
-    form = form)
+                           title="Name",
+                           name=name,
+                           form=form)
 
 
 @app.errorhandler(404)
 def not_found(e):
     return render_template("404.html"), 404
 
+
 @app.errorhandler(500)
 def internal_error(e):
     return render_template("500.html"), 500
-
 
 
 if __name__ == '__main__':
