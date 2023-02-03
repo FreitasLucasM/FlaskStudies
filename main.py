@@ -1,6 +1,6 @@
-from flask import Flask, render_template, flash, request
+from flask import Flask, render_template, flash, request, Response
 from flask_wtf import FlaskForm
-from wtforms import StringField, SubmitField, PasswordField, BooleanField, ValidationError
+from wtforms import StringField, SubmitField, PasswordField, BooleanField, ValidationError, EmailField
 from wtforms.validators import DataRequired, EqualTo, Length
 
 from flask_sqlalchemy import SQLAlchemy
@@ -63,6 +63,12 @@ class users(db.Model):
 class NameForm(FlaskForm):
     name =  StringField("What's Your Name", validators=[DataRequired()])
     submit = SubmitField('Submit')
+    
+class PasswordForm(FlaskForm):
+    email =  EmailField("Email", validators=[DataRequired()])
+    password_hash = PasswordField("Password", validators=[DataRequired()])
+    submit = SubmitField('Submit')
+    
 class UserForm(FlaskForm):
     name =  StringField("Name", validators=[DataRequired()])
     email = StringField("Email", validators=[DataRequired()])
@@ -70,6 +76,35 @@ class UserForm(FlaskForm):
     password_hash = PasswordField("Password", validators=[DataRequired(), EqualTo('password_hash2', message='Passwords must match')])
     password_hash2 = PasswordField("Confirm Password", validators=[DataRequired()])
     submit = SubmitField('Submit')
+
+# Json thing
+
+
+
+
+@app.route('/test_pw', methods = ['GET', 'POST'])
+def test_pwd():
+    email = None
+    password = None
+    passed = None
+    
+    form = PasswordForm()
+    # Validate form
+    if form.validate_on_submit():
+        email = form.email.data
+        password = form.password_hash.data
+        
+        # check user
+        user = users.query.filter_by(email = email).first()
+        if user:
+            passed = user.verify_password(password)
+            print(passed)
+                
+        # Clear form
+        form.email.data = ''
+        form.password_hash.data = ''
+    return render_template('test_pwd.html', email=email, password = password, form = form)
+        
 
 
 @app.route('/delete/<int:id>')

@@ -9,6 +9,16 @@
       "driver": "MySQL",
       "name": "UsersFlaskCodemy",
       "connectString": "mysql://root:mypassword@localhost/users"
+    },
+    {
+      "mysqlOptions": {
+        "authProtocol": "default"
+      },
+      "previewLimit": 50,
+      "server": "localhost",
+      "driver": "MySQL",
+      "name": "UsersFlaskCodemyHome",
+      "connectString": "mysql://root:try#Honesty2001@127.0.0.1/users"
     }
   ]
 }
